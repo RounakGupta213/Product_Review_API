@@ -4,23 +4,18 @@ from datetime import datetime
 from app.db.database import get_database
 from app.models import (
     ProductCreate, ProductUpdate, ProductResponse, 
-    ReviewCreate, ReviewResponse, ReviewListResponse
-)
+    ReviewCreate, ReviewResponse, ReviewListResponse)
 from app.service import DatabaseService
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
 router = APIRouter()
 
-
 async def get_service(db: AsyncDatabase = Depends(get_database)) -> DatabaseService:
-    """Get database service"""
     return DatabaseService(db)
-
 
 @router.post("/products", response_model=ProductResponse, status_code=201, tags=["products"])
 async def create_product(product: ProductCreate, service: DatabaseService = Depends(get_service)):
-    """Create a new product"""
     try:
         data = {
             **product.dict(),
@@ -38,14 +33,12 @@ async def create_product(product: ProductCreate, service: DatabaseService = Depe
 
 @router.get("/products", tags=["products"])
 async def list_products(skip: int = 0, limit: int = 10, service: DatabaseService = Depends(get_service)):
-    """List all products with pagination"""
     try:
         products, total = await service.list_products(skip, limit)
         return {"products": products, "total": total}
     except Exception as e:
         logger.error(f"Error listing products: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.get("/products/{product_id}", response_model=ProductResponse, tags=["products"])
 async def get_product(product_id: str, service: DatabaseService = Depends(get_service)):
@@ -58,7 +51,6 @@ async def get_product(product_id: str, service: DatabaseService = Depends(get_se
     except Exception as e:
         logger.error(f"Error getting product: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.put("/products/{product_id}", response_model=ProductResponse, tags=["products"])
 async def update_product(product_id: str, product: ProductUpdate, service: DatabaseService = Depends(get_service)):
@@ -73,7 +65,6 @@ async def update_product(product_id: str, product: ProductUpdate, service: Datab
         logger.error(f"Error updating product: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.delete("/products/{product_id}", status_code=204, tags=["products"])
 async def delete_product(product_id: str, service: DatabaseService = Depends(get_service)):
     """Delete a product"""
@@ -84,7 +75,6 @@ async def delete_product(product_id: str, service: DatabaseService = Depends(get
     except Exception as e:
         logger.error(f"Error deleting product: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.post("/products/{product_id}/reviews", response_model=ReviewResponse, status_code=201, tags=["reviews"])
 async def create_review(
@@ -101,7 +91,6 @@ async def create_review(
     except Exception as e:
         logger.error(f"Error creating review: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.get("/products/{product_id}/reviews", response_model=ReviewListResponse, tags=["reviews"])
 async def get_product_reviews(
@@ -121,7 +110,6 @@ async def get_product_reviews(
     except Exception as e:
         logger.error(f"Error getting reviews: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.delete("/reviews/{review_id}", status_code=204, tags=["reviews"])
 async def delete_review(

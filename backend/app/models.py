@@ -8,7 +8,6 @@ class ProductBase(BaseModel):
     price: float = Field(..., gt=0)
     category: str = Field(..., min_length=1, max_length=100)
 
-
 class ProductCreate(ProductBase):
     pass
 
@@ -28,7 +27,6 @@ class ProductResponse(ProductBase):
     class Config:
         from_attributes = True
         populate_by_name = True
-
 
 class ReviewCreate(BaseModel):
     user_id: str = Field(..., min_length=1)
@@ -50,7 +48,6 @@ class ReviewUpdate(BaseModel):
         if v is not None and not v.strip():
             raise ValueError('Comment cannot be empty or only whitespace')
         return v.strip() if v else v
-
 
 class ReviewResponse(BaseModel):
     id: str = Field(..., alias="_id")
