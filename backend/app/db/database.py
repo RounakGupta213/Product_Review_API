@@ -1,4 +1,5 @@
 from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import IndexModel, ASCENDING
 from typing import Optional
 from app.core.config import settings
 from app.core.logger import get_logger
@@ -17,9 +18,9 @@ class Database:
             
             await cls.client.admin.command('ping')
             logger.info("Connected to MongoDB successfully")
-            
+ 
         except Exception as e:
-            logger.error(f"Failed to connect to MongoDB: {str(e)}")
+            logger.error(f"Failed to connect to MongoDB or ensure indices: {str(e)}")
             raise
     
     @classmethod

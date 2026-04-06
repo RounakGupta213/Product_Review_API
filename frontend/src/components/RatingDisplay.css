@@ -1,0 +1,30 @@
+.rating-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stars {
+  display: flex;
+  gap: 2px;
+}
+
+.star {
+  color: #ddd;
+  font-size: 18px;
+}
+
+.star.interactive {
+  cursor: pointer;
+  transition: transform 0.2s, color 0.2s;
+}
+
+.star.interactive:hover {
+  transform: scale(1.2);
+  color: #ffc107;
+}
+
+.rating-text {
+  font-size: 14px;
+  color: #666;
+}

@@ -94,7 +94,10 @@ async def create_review(
         result["_id"] = str(result["_id"])
         return result
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        status_code = status.HTTP_404_NOT_FOUND
+        if "already reviewed" in str(e).lower():
+            status_code = status.HTTP_409_CONFLICT
+        raise HTTPException(status_code=status_code, detail=str(e))
     except Exception as e:
         logger.error(f"Error creating review: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -1,5 +1,6 @@
 from datetime import datetime
 from bson import ObjectId
+import pymongo
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -72,6 +73,17 @@ class DatabaseService:
             # Verify product exists
             await self.get_product(product_id)
             
+            # Check if review already exists for this (product, user) 
+            # (Double check at application level before insert)
+            user_id = review_data.get("user_id")
+            existing = await self.reviews.find_one({
+                "product_id": product_id,
+                "user_id": user_id
+            })
+            
+            if existing:
+                raise ValueError(f"User {user_id} has already reviewed this product")
+                
             review_data["product_id"] = product_id
             review_data["created_at"] = datetime.utcnow()
             review_data["updated_at"] = datetime.utcnow()
@@ -86,6 +98,7 @@ class DatabaseService:
             review = await self.reviews.find_one({"_id": result.inserted_id})
             return review
             
+
         except Exception as e:
             logger.error(f"Error creating review: {str(e)}")
             raise

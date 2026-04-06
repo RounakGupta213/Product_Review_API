@@ -1,0 +1,44 @@
+.rating-input {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rating-input label {
+  font-weight: bold;
+  font-size: 14px;
+  color: #333;
+}
+
+.star-container {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.star {
+  background: none;
+  border: none;
+  font-size: 40px;
+  cursor: pointer;
+  color: #ddd;
+  padding: 5px;
+  transition: color 0.15s, transform 0.15s;
+  line-height: 1;
+}
+
+.star:hover {
+  color: #ffc107;
+  transform: scale(1.1);
+}
+
+.star.active {
+  color: #ffc107;
+}
+
+.rating-value {
+  font-weight: bold;
+  font-size: 14px;
+  color: #666;
+  min-height: 20px;
+}
