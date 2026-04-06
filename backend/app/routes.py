@@ -24,6 +24,8 @@ async def create_product(product: ProductCreate, service: DatabaseService = Depe
             "updated_at": datetime.utcnow()
         }
         result = await service.create_product(data)
+        # Convert MongoDB ObjectId to string
+        result["_id"] = str(result["_id"])
         return result
     except Exception as e:
         logger.error(f"Error creating product: {str(e)}")
@@ -34,6 +36,9 @@ async def create_product(product: ProductCreate, service: DatabaseService = Depe
 async def list_products(skip: int = 0, limit: int = 10, service: DatabaseService = Depends(get_service)):
     try:
         products, total = await service.list_products(skip, limit)
+        # Convert ObjectId to string for all products
+        for product in products:
+            product["_id"] = str(product["_id"])
         return {"products": products, "total": total}
     except Exception as e:
         logger.error(f"Error listing products: {str(e)}")
@@ -44,6 +49,7 @@ async def get_product(product_id: str, service: DatabaseService = Depends(get_se
     """Get a product by ID"""
     try:
         product = await service.get_product(product_id)
+        product["_id"] = str(product["_id"])
         return product
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -57,6 +63,7 @@ async def update_product(product_id: str, product: ProductUpdate, service: Datab
     try:
         update_data = product.dict(exclude_unset=True)
         result = await service.update_product(product_id, update_data)
+        result["_id"] = str(result["_id"])
         return result
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -84,6 +91,7 @@ async def create_review(
     try:
         data = review.dict()
         result = await service.create_review(product_id, data)
+        result["_id"] = str(result["_id"])
         return result
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
