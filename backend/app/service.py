@@ -1,13 +1,12 @@
 from datetime import datetime
 from bson import ObjectId
-from motor.motor_asyncio import AsyncDatabase
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
 
 class DatabaseService:
 
-    def __init__(self, db: AsyncDatabase):
+    def __init__(self, db):
         self.db = db
         self.products = db["products"]
         self.reviews = db["reviews"]
@@ -159,6 +158,5 @@ class DatabaseService:
             logger.error(f"Error updating rating: {str(e)}")
             raise
 
-async def get_service(db: AsyncDatabase) -> DatabaseService:
-    """Dependency for getting database service"""
+async def get_service(db):
     return DatabaseService(db)

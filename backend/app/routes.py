@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, status
-from motor.motor_asyncio import AsyncDatabase
 from datetime import datetime
 from app.db.database import get_database
 from app.models import (
@@ -11,7 +10,7 @@ from app.core.logger import get_logger
 logger = get_logger(__name__)
 router = APIRouter()
 
-async def get_service(db: AsyncDatabase = Depends(get_database)) -> DatabaseService:
+async def get_service(db = Depends(get_database)) -> DatabaseService:
     return DatabaseService(db)
 
 @router.post("/products", response_model=ProductResponse, status_code=201, tags=["products"])

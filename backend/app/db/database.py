@@ -1,17 +1,17 @@
-from motor.motor_asyncio import AsyncClient, AsyncDatabase
+from motor.motor_asyncio import AsyncIOMotorClient
 from app.core.config import settings
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
 
 class Database:
-    client: AsyncClient = None
-    db: AsyncDatabase = None
+    client: AsyncIOMotorClient = None
+    db = None
     
     @classmethod
     async def connect_db(cls):
         try:
-            cls.client = AsyncClient(settings.MONGODB_URL)
+            cls.client = AsyncIOMotorClient(settings.MONGODB_URL)
             cls.db = cls.client[settings.DATABASE_NAME]
             
             await cls.client.admin.command('ping')
