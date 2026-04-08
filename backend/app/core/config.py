@@ -17,6 +17,10 @@ class Settings:
     PORT: int = int(os.getenv("PORT", 8000))
     
     API_V1_PREFIX: str = "/api/v1"
+    # Security
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here-for-development-only")
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
     
     # Validation set for reviews 
     MAX_REVIEW_LENGTH: int = 5000

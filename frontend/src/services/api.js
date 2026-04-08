@@ -75,10 +75,16 @@ export const reviewApi = {
   },
 
   // Delete review 
-  deleteReview: async (reviewId, userId) => {
+  deleteReview: async (reviewId) => {
+    const token = localStorage.getItem("token");
     const response = await fetch(
-      `${API_BASE_URL}/reviews/${reviewId}?user_id=${userId}`,
-      { method: "DELETE" }
+      `${API_BASE_URL}/reviews/${reviewId}`,
+      { 
+        method: "DELETE",
+        headers: {
+            "Authorization": `Bearer ${token}`
+        }
+      }
     );
     if (!response.ok) throw new Error("Failed to delete review");
   },

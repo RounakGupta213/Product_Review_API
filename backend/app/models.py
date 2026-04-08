@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, EmailStr
 
 class ProductBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
@@ -65,3 +65,50 @@ class ReviewResponse(BaseModel):
 class ReviewListResponse(BaseModel):
     reviews: list[ReviewResponse]
     total: int
+
+# User Models
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str = Field(..., max_length=72)
+    
+    @validator('password')
+    def password_length_check(cls, v):
+        if len(v.encode('utf-8')) > 72:
+            raise ValueError('Password is too long. Please use a shorter password.')
+        return v
+
+class UserRegister(UserLogin):
+    full_name: str = Field(..., min_length=1, max_length=100)
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user: "UserResponse"
+
+class UserResponse(BaseModel):
+    id: str = Field(..., alias="_id")
+    email: EmailStr
+    full_name: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
+
+# Order Models
+class OrderCreate(BaseModel):
+    product_id: str
+    quantity: int = Field(..., gt=0)
+
+class OrderResponse(BaseModel):
+    id: str = Field(..., alias="_id")
+    product_id: str
+    user_id: str
+    quantity: int
+    total_price: float
+    status: str = "pending"
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True

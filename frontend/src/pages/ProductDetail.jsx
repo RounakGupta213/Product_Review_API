@@ -3,9 +3,11 @@ import { productApi, reviewApi } from "../services/api";
 import { RatingDisplay } from "../components/RatingDisplay";
 import { ReviewForm } from "../components/ReviewForm";
 import { ReviewItem } from "../components/ReviewItem";
+import { useAuth } from "../context/AuthContext";
 import "./ProductDetail.css";
 
 export const ProductDetail = ({ productId, onBack }) => {
+  const { logout, user } = useAuth();
   const [product, setProduct] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,10 +35,10 @@ export const ProductDetail = ({ productId, onBack }) => {
     }
   };
 
-  const handleDeleteReview = async (reviewId, userId) => {
+  const handleDeleteReview = async (reviewId) => {
     if (window.confirm("Are you sure you want to delete this review?")) {
       try {
-        await reviewApi.deleteReview(reviewId, userId);
+        await reviewApi.deleteReview(reviewId);
         await loadProductAndReviews();
       } catch (err) {
         setError(err.message || "Failed to delete review");
@@ -89,7 +91,8 @@ export const ProductDetail = ({ productId, onBack }) => {
               <ReviewItem
                 key={review._id}
                 review={review}
-                onDelete={(reviewId) => handleDeleteReview(reviewId, review.user_id)}
+                onDelete={handleDeleteReview}
+                currentUserId={user?.id}
               />
             ))}
           </div>

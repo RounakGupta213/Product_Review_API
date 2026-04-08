@@ -62,6 +62,7 @@
   margin-top: 15px;
 }
 
+.view-details-btn,
 .view-btn,
 .delete-btn {
   flex: 1;
@@ -72,6 +73,15 @@
   font-size: 14px;
   font-weight: bold;
   transition: background 0.3s;
+}
+
+.view-details-btn {
+  background: #6366f1;
+  color: white;
+}
+
+.view-details-btn:hover {
+  background: #4f46e5;
 }
 
 .view-btn {

@@ -2,6 +2,7 @@ from datetime import datetime
 from bson import ObjectId
 import pymongo
 from app.core.logger import get_logger
+from app.core.security import get_password_hash
 
 logger = get_logger(__name__)
 
@@ -11,6 +12,11 @@ class DatabaseService:
         self.db = db
         self.products = db["products"]
         self.reviews = db["reviews"]
+        self.users = db["users"]
+        self.orders = db["orders"]
+        
+        # Ensure unique index for users
+        self.users.create_index("email", unique=True)
 
     async def create_product(self, product_data: dict):
         try:
@@ -169,6 +175,45 @@ class DatabaseService:
             
         except Exception as e:
             logger.error(f"Error updating rating: {str(e)}")
+            raise
+
+    # User Methods
+    async def create_user(self, user_data: dict):
+        try:
+            user_data["password"] = get_password_hash(user_data["password"])
+            user_data["created_at"] = datetime.utcnow()
+            result = await self.users.insert_one(user_data)
+            user = await self.users.find_one({"_id": result.inserted_id})
+            logger.info(f"Created user: {user_data['email']}")
+            return user
+        except pymongo.errors.DuplicateKeyError:
+            raise ValueError(f"User with email {user_data['email']} already exists")
+        except Exception as e:
+            logger.error(f"Error creating user: {str(e)}")
+            raise
+
+    async def get_user_by_email(self, email: str):
+        try:
+            return await self.users.find_one({"email": email})
+        except Exception as e:
+            logger.error(f"Error getting user by email: {str(e)}")
+            raise
+
+    # Order Methods
+    async def create_order(self, order_data: dict):
+        try:
+            # Check product exists
+            product = await self.get_product(order_data["product_id"])
+            order_data["total_price"] = product["price"] * order_data["quantity"]
+            order_data["status"] = "pending"
+            order_data["created_at"] = datetime.utcnow()
+            
+            result = await self.orders.insert_one(order_data)
+            order = await self.orders.find_one({"_id": result.inserted_id})
+            logger.info(f"Created order for user {order_data['user_id']}")
+            return order
+        except Exception as e:
+            logger.error(f"Error creating order: {str(e)}")
             raise
 
 async def get_service(db):

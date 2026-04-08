@@ -72,6 +72,12 @@ export const ProductList = ({ onSelectProduct }) => {
                 />
                 <div className="button-group">
                   <button
+                    className="view-details-btn"
+                    onClick={() => onSelectProduct(product._id)}
+                  >
+                    View Details
+                  </button>
+                  <button
                     className="view-btn"
                     onClick={() => handleOpenReview(product._id)}
                   >

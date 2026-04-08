@@ -1,17 +1,43 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from datetime import datetime
 from app.db.database import get_database
 from app.models import (
     ProductCreate, ProductUpdate, ProductResponse, 
-    ReviewCreate, ReviewResponse, ReviewListResponse)
+    ReviewCreate, ReviewResponse, ReviewListResponse,
+    UserRegister, UserLogin, Token, UserResponse,
+    OrderCreate, OrderResponse
+)
 from app.service import DatabaseService
 from app.core.logger import get_logger
+from app.core.security import create_access_token, verify_password
 
 logger = get_logger(__name__)
 router = APIRouter()
 
 async def get_service(db = Depends(get_database)) -> DatabaseService:
     return DatabaseService(db)
+
+security = HTTPBearer()
+
+async def get_current_user(
+    auth: HTTPAuthorizationCredentials = Depends(security),
+    service: DatabaseService = Depends(get_service)
+) -> UserResponse:
+    from app.core.security import decode_access_token
+    email = decode_access_token(auth.credentials)
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    user = await service.get_user_by_email(email)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    # Convert ObjectId to string for Pydantic model
+    user["_id"] = str(user["_id"])
+    return UserResponse(**user)
 
 @router.post("/products", response_model=ProductResponse, status_code=201, tags=["products"])
 async def create_product(product: ProductCreate, service: DatabaseService = Depends(get_service)):
@@ -111,6 +137,9 @@ async def get_product_reviews(
 
     try:
         reviews, total = await service.get_product_reviews(product_id, skip, limit)
+        # Convert ObjectId to string for all reviews
+        for review in reviews:
+            review["_id"] = str(review["_id"])
         return {
             "reviews": reviews,
             "total": total
@@ -124,11 +153,11 @@ async def get_product_reviews(
 @router.delete("/reviews/{review_id}", status_code=204, tags=["reviews"])
 async def delete_review(
     review_id: str,
-    user_id: str = Query(...),
+    current_user: UserResponse = Depends(get_current_user),
     service: DatabaseService = Depends(get_service)):
     
     try:
-        await service.delete_review(review_id, user_id)
+        await service.delete_review(review_id, current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -138,3 +167,52 @@ async def delete_review(
 @router.get("/health", tags=["health"])
 async def health_check():
     return {"status": "ok", "service": "Product Review API"}
+
+# Auth Routes
+@router.post("/auth/register", response_model=UserResponse, status_code=201, tags=["auth"])
+async def register(user: UserRegister, service: DatabaseService = Depends(get_service)):
+    try:
+        result = await service.create_user(user.dict())
+        result["_id"] = str(result["_id"])
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error in register: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.post("/auth/login", response_model=Token, tags=["auth"])
+async def login(user_data: UserLogin, service: DatabaseService = Depends(get_service)):
+    user = await service.get_user_by_email(user_data.email)
+    if not user or not verify_password(user_data.password, user["password"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token = create_access_token(data={"sub": user["email"]})
+    user["_id"] = str(user["_id"])
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer",
+        "user": user
+    }
+
+# Order Routes
+@router.post("/orders", response_model=OrderResponse, status_code=201, tags=["orders"])
+async def create_order(
+    order: OrderCreate, 
+    user_id: str = Query(...), 
+    service: DatabaseService = Depends(get_service)):
+    try:
+        data = order.dict()
+        data["user_id"] = user_id
+        result = await service.create_order(data)
+        result["_id"] = str(result["_id"])
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error creating order: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
